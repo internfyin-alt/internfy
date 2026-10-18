@@ -1,11 +1,13 @@
+"use client";
+
 import { useState } from "react";
 
 // import your images
-import img1 from "/src/assets/wipro.png";
-import img2 from "/src/assets/waste.png";
-import img3 from "/src/assets/birla.png";
-import img4 from "/src/assets/niit.png";
-import img5 from "/src/assets/fiserv.png";
+const img1 = "/assets/wipro.0931a3466d6c.webp";
+const img2 = "/assets/waste.0250d13b1ce6.webp";
+const img3 = "/assets/birla.3f1b686dc2be.webp";
+const img4 = "/assets/niit.2db1cd97a03b.webp";
+const img5 = "/assets/fiserv.488a564b6323.webp";
 
 const images = [img1, img2, img3, img4, img5];
 
@@ -17,7 +19,7 @@ const ImageHoverSection = () => {
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex flex-wrap justify-center gap-10">
           {images.map((img, index) => (
-            <img
+            <img loading="lazy" decoding="async"
               key={index}
               src={img}
               alt="tech"

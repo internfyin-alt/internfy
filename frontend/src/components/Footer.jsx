@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import { motion } from "framer-motion";
 import {
@@ -10,7 +12,8 @@ import {
   Heart,
   Globe,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import Link from "next/link";
+import Image from "next/image";
 
 const Footer = () => {
   const navLinks = [
@@ -24,11 +27,11 @@ const Footer = () => {
   ];
 
   const services = [
-    "Website Development",
-    "Web Application Development",
-    "Cloud Services",
-    "Backend Development",
-    "API Integration",
+    { name: "Website Development", href: "/webservice" },
+    { name: "Web Application Development", href: "/webservice" },
+    { name: "Cloud Services", href: "/cloudservice" },
+    { name: "Backend Development", href: "/backendservice" },
+    { name: "API Integration", href: "/apiservice" },
   ];
 
   return (
@@ -51,10 +54,13 @@ const Footer = () => {
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
           >
-            <img
-              src="/business/logo1.png"
+            <Image
+              src="/internfy-logo.png"
               alt="Internfy"
-              className="h-16 w-auto mb-6 brightness-0 invert"
+              width={112}
+              height={112}
+              sizes="112px"
+              className="h-28 w-28 object-contain rounded-full mb-6"
             />
 
             <p className="text-sm leading-relaxed text-gray-400 mb-4">
@@ -114,7 +120,7 @@ const Footer = () => {
               {navLinks.map((link, index) => (
                 <li key={index}>
                   <Link
-                    to={link.href}
+                    href={link.href}
                     className="hover:text-blue-400 transition relative group cursor-pointer"
                   >
                     {link.name}
@@ -141,7 +147,7 @@ const Footer = () => {
                   key={index}
                   className="hover:text-purple-400 transition cursor-pointer"
                 >
-                  {service}
+                  <Link href={service.href}>{service.name}</Link>
                 </li>
               ))}
             </ul>
@@ -200,10 +206,10 @@ const Footer = () => {
           </p>
 
           <div className="flex gap-6">
-            <Link to="/privacy" className="hover:text-white transition cursor-pointer">
+            <Link href="/privacy" className="hover:text-white transition cursor-pointer">
               Privacy Policy
             </Link>
-            <Link to="/terms" className="hover:text-white transition cursor-pointer">
+            <Link href="/terms" className="hover:text-white transition cursor-pointer">
               Terms
             </Link>
           </div>

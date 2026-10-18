@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 
 const WhatsAppFloat = () => {
@@ -14,21 +16,21 @@ const WhatsAppFloat = () => {
       target="_blank"
       rel="noopener noreferrer"
       className="
-        fixed 
-        left-4 
-        bottom-6 
-        z-50 
-        flex 
-        items-center 
-        justify-center 
-        w-14 
-        h-14 
-        rounded-full 
-        bg-green-500 
-        shadow-lg 
-        hover:bg-green-600 
-        hover:scale-110 
-        transition 
+        fixed
+        left-4
+        bottom-6
+        z-40
+        flex
+        items-center
+        justify-center
+        w-14
+        h-14
+        rounded-full
+        bg-green-500
+        shadow-lg
+        hover:bg-green-600
+        hover:scale-110
+        transition
         duration-300
       "
       aria-label="Chat on WhatsApp"

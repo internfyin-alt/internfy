@@ -1,6 +1,10 @@
-import { NavLink } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { Menu, X } from 'lucide-react';
+"use client";
+
+import Link from "next/link";
+import Image from "next/image";
+import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { Menu, X } from "lucide-react";
 
 const navItems = [
   { name: "Home", path: "/" },
@@ -12,138 +16,77 @@ const navItems = [
   { name: "Contact", path: "/contact" },
 ];
 
-const Navbar = () => {
-  const [scrolled, setScrolled] = useState(false);
+export default function Navbar() {
+  const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [activeMobileMenu, setActiveMobileMenu] = useState(false);
+  const menuButton = useRef(null);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 80);
+    const desktop = window.matchMedia("(min-width: 1024px)");
+    const closeOnDesktop = () => {
+      if (desktop.matches) setMenuOpen(false);
     };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    desktop.addEventListener("change", closeOnDesktop);
+    return () => desktop.removeEventListener("change", closeOnDesktop);
   }, []);
 
   useEffect(() => {
-    if (menuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
+    if (!menuOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+        menuButton.current?.focus();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", onKeyDown);
+    };
   }, [menuOpen]);
 
-  const baseLink = "transition-all duration-300 hover:text-blue-400 relative group";
-  const activeLink = "text-blue-500 font-semibold";
+  const linkClass = (path) =>
+    `block rounded-xl px-3 py-3 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 ${
+      pathname === path ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:bg-gray-100 hover:text-blue-700"
+    }`;
 
   return (
-    <>
-      <nav
-        className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${
-          scrolled
-            ? "bg-white/95 backdrop-blur-md shadow-lg py-2"
-            : "bg-transparent py-4"
-        }`}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          {/* Logo */}
-          <div className="flex-shrink-0 flex items-center">
-  <img
-    src="/business/logo1.png"
-    alt="logo"
-    className="h-16 md:h-20 w-auto object-contain"
-  />
-</div>
+    <header className="fixed inset-x-0 top-0 z-[100] border-b border-gray-200 bg-white shadow-sm">
+      <nav aria-label="Main navigation" className="relative z-10 mx-auto max-w-7xl bg-white px-4 sm:px-6 lg:px-8">
+        <div className="flex h-[var(--navbar-height)] items-center justify-between gap-4">
+          <Link href="/" aria-label="Internfy home" onClick={() => setMenuOpen(false)} className="flex shrink-0 items-center gap-2 rounded-lg focus-visible:outline-2 focus-visible:outline-blue-600">
+            <Image src="/internfy-logo.png" alt="" width={48} height={48} sizes="(min-width: 768px) 48px, 40px" loading="eager" className="h-10 w-10 rounded-full object-contain md:h-12 md:w-12" />
+            <span className="text-lg font-bold text-cyan-600 sm:text-xl">Internfy</span>
+          </Link>
 
-
-          {/* Desktop Menu */}
-          <ul className="hidden lg:flex items-center gap-1 xl:gap-4">
+          <ul className="hidden items-center gap-1 lg:flex">
             {navItems.map((item) => (
-              <li key={item.name}>
-                <NavLink
-                  to={item.path}
-                  className={({ isActive }) =>
-                    `px-3 py-2 text-sm xl:text-base font-medium rounded-full ${baseLink} ${
-                      isActive ? activeLink : scrolled ? "text-gray-700" : "text-white"
-                    }`
-                  }
-                >
-                  {({ isActive }) => (
-                    <>
-                      {item.name}
-                      <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 w-0 h-0.5 bg-blue-500 transition-all duration-300 group-hover:w-full ${isActive ? 'w-full' : ''}`}></span>
-                    </>
-                  )}
-                </NavLink>
+              <li key={item.path}>
+                <Link href={item.path} aria-current={pathname === item.path ? "page" : undefined} className={linkClass(item.path)}>{item.name}</Link>
               </li>
             ))}
           </ul>
 
-          {/* Mobile Menu Button */}
-          <button
-            className={`lg:hidden p-2 rounded-lg transition-all duration-300 ${
-              scrolled ? "text-gray-700 hover:bg-gray-100" : "text-white hover:bg-white/10"
-            }`}
-            onClick={() => setMenuOpen(!menuOpen)}
-            aria-label="Toggle menu"
-          >
-            {menuOpen ? <X size={24} /> : <Menu size={24} />}
+          <button ref={menuButton} type="button" aria-expanded={menuOpen} aria-controls="mobile-navigation" aria-label={menuOpen ? "Close menu" : "Open menu"} onClick={() => setMenuOpen((open) => !open)} className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-gray-800 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-blue-600 lg:hidden">
+            {menuOpen ? <X size={26} /> : <Menu size={26} />}
           </button>
         </div>
-      </nav>
 
-      {/* Mobile Menu Overlay */}
-      <div
-        className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-500 lg:hidden ${
-          menuOpen ? "opacity-100 visible" : "opacity-0 invisible"
-        }`}
-        onClick={() => setMenuOpen(false)}
-      ></div>
-
-      {/* Mobile Menu Panel */}
-      <div
-        className={`fixed top-0 right-0 h-full w-72 bg-white shadow-2xl z-50 transform transition-transform duration-500 ease-out lg:hidden ${
-          menuOpen ? "translate-x-0" : "translate-x-full"
-        }`}
-      >
-        <div className="flex flex-col h-full">
-          <div className="p-6 border-b">
-            <img src="/business/logo1.png" alt="logo" className="h-12 w-auto" />
-          </div>
-          
-          <ul className="flex-1 overflow-y-auto py-6 px-4">
-            {navItems.map((item, index) => (
-              <li 
-                key={item.name}
-                className="mb-2"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <NavLink
-                  to={item.path}
-                  onClick={() => setMenuOpen(false)}
-                  className={({ isActive }) =>
-                    `block px-4 py-3 rounded-xl text-base font-medium transition-all duration-300 ${
-                      isActive
-                        ? "bg-blue-50 text-blue-600"
-                        : "text-gray-700 hover:bg-gray-50 hover:pl-6"
-                    }`
-                  }
-                >
-                  {item.name}
-                </NavLink>
+        <div id="mobile-navigation" hidden={!menuOpen} className="max-h-[calc(100dvh-var(--navbar-height))] overflow-y-auto border-t border-gray-100 py-3 lg:hidden" onBlur={(event) => {
+          if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget) && event.relatedTarget !== menuButton.current) setMenuOpen(false);
+        }}>
+          <ul className="space-y-1">
+            {navItems.map((item) => (
+              <li key={item.path}>
+                <Link href={item.path} aria-current={pathname === item.path ? "page" : undefined} onClick={() => setMenuOpen(false)} className={linkClass(item.path)}>{item.name}</Link>
               </li>
             ))}
           </ul>
-
-          <div className="p-6 border-t bg-gray-50">
-            <p className="text-sm text-gray-600 text-center">
-              © 2026 Your Company. All rights reserved.
-            </p>
-          </div>
         </div>
-      </div>
-    </>
+      </nav>
+      {menuOpen && <button type="button" tabIndex={-1} aria-label="Close navigation" onClick={() => setMenuOpen(false)} className="fixed inset-0 bg-black/40 lg:hidden" />}
+    </header>
   );
-};
-
-export default Navbar;
+}

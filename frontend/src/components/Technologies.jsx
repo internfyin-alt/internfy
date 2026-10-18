@@ -1,13 +1,15 @@
+"use client";
+
 import { useState } from "react";
 
-import aws from "../assets/aws.png";
-import supabase from "../assets/superbaised.png";
-import nodejs from "../assets/nodejs.png";
-import react from "../assets/react.png";
-import node from "../assets/node.png";
-import coder from "../assets/coder.png";
-import docker from "../assets/docker.png";
-import panda from "../assets/panda.png";
+const aws = "/assets/aws.34a1817e273d.webp";
+const supabase = "/assets/superbaised.9e301f1a1693.webp";
+const nodejs = "/assets/nodejs.acf1a8e4d355.webp";
+const react = "/assets/react.775ff3c1aa46.webp";
+const node = "/assets/node.f05036350040.webp";
+const coder = "/assets/coder.f2ee1041dd18.webp";
+const docker = "/assets/docker.7befe4c2b0ce.webp";
+const panda = "/assets/panda.0ba34e9019bd.webp";
 
 const techImages = [
   { img: aws, color: "#FF9900" },      // AWS orange
@@ -36,7 +38,7 @@ const Technologies = () => {
           }`}
         >
           {[...techImages, ...techImages].map((item, index) => (
-            <img
+            <img loading="lazy" decoding="async"
               key={index}
               src={item.img}
               alt="technology"

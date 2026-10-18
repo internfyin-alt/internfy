@@ -1,11 +1,12 @@
+"use client";
+
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import Link from "next/link";
 import { ArrowRight } from 'lucide-react';
 
 const CreativeSection = () => {
   const sectionRef = useRef(null);
   const [show, setShow] = useState(false);
-  const navigate = useNavigate();
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -27,7 +28,7 @@ const CreativeSection = () => {
       ref={sectionRef}
       className="relative min-h-screen flex items-center justify-center bg-cover bg-center bg-fixed"
       style={{
-        backgroundImage: "url('/business/background.png')",
+        backgroundImage: "url('/business/background.75728d9adc70.webp')",
       }}
     >
       {/* Overlay with Gradient */}
@@ -68,18 +69,18 @@ const CreativeSection = () => {
         </p>
 
         {/* BUTTON */}
-        <button
-          onClick={() => navigate("/contact")}
+        <Link
+          href="/contact"
           className={`group px-8 sm:px-12 py-4 sm:py-5 text-base sm:text-lg font-bold text-white rounded-full
             bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500
             hover:from-green-500 hover:via-teal-500 hover:to-indigo-500
             transition-all duration-500 hover:scale-110 hover:shadow-2xl
-            flex items-center gap-2 mx-auto
+            flex w-fit items-center gap-2 mx-auto
             ${show ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"}`}
         >
           Contact Us
           <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-        </button>
+        </Link>
       </div>
     </section>
   );

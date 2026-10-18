@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 
 const CallFloat = () => {
@@ -10,7 +12,7 @@ const CallFloat = () => {
         fixed
         right-4
         bottom-6
-        z-50
+        z-40
         flex
         items-center
         justify-center

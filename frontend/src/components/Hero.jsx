@@ -1,18 +1,17 @@
+"use client";
+
 import React, { useEffect, useRef } from "react";
 import { Mail, ArrowRight } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import Link from "next/link";
 import gsap from "gsap";
-import bgImage from "../assets/bg.png";
-import heroVideo from "../assets/video.mp4";
+import EnquiryForm from "./EnquiryForm";
+const bgImage = "/assets/bg.cfd21d24e7fe.webp";
 
 const Hero = () => {
-  const navigate = useNavigate();
-
   const sectionRef = useRef(null);
   const headingRef = useRef(null);
   const textRef = useRef(null);
   const btnRef = useRef([]);
-  const videoRef = useRef(null);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -44,54 +43,19 @@ const Hero = () => {
             ease: "power3.out",
           },
           "-=0.5"
-        )
-        .from(
-          videoRef.current,
-          {
-            scale: 0.85,
-            opacity: 0,
-            duration: 1,
-            ease: "power3.out",
-          },
-          "-=0.8"
         );
-
-      // Floating animation
-      gsap.to(videoRef.current, {
-        y: -15,
-        duration: 3,
-        repeat: -1,
-        yoyo: true,
-        ease: "sine.inOut",
-      });
     }, sectionRef);
 
     return () => ctx.revert();
   }, []);
 
-  // Mouse 3D tilt effect
-  const handleMouseMove = (e) => {
-    const { clientX, clientY } = e;
-    const x = (clientX / window.innerWidth - 0.5) * 30;
-    const y = (clientY / window.innerHeight - 0.5) * 30;
-
-    gsap.to(videoRef.current, {
-      rotationY: x,
-      rotationX: -y,
-      transformPerspective: 800,
-      transformOrigin: "center",
-      duration: 0.5,
-      ease: "power2.out",
-    });
-  };
-
   return (
     <section
       ref={sectionRef}
-      onMouseMove={handleMouseMove}
-      className="relative min-h-screen flex items-center text-white bg-cover bg-center overflow-hidden"
+      className="relative min-h-[calc(100svh-var(--navbar-height))] py-12 sm:py-16 flex items-center text-white bg-cover bg-center overflow-hidden"
       style={{ backgroundImage: `url(${bgImage})` }}
     >
+      <link rel="preload" as="image" href={bgImage} fetchPriority="high" />
       {/* Dark Overlay */}
       <div className="absolute inset-0 bg-black/70"></div>
 
@@ -124,36 +88,27 @@ const Hero = () => {
             <div className="mt-8 flex flex-col sm:flex-row gap-4">
               <button
                 ref={(el) => (btnRef.current[0] = el)}
-                onClick={() => navigate("/contact")}
+                onClick={() => document.getElementById("enquiry")?.scrollIntoView({ behavior: "smooth" })}
                 className="cursor-pointer flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-3 rounded-full font-semibold hover:scale-110 hover:shadow-2xl transition-all duration-300"
               >
                 Get Started
                 <ArrowRight className="w-5 h-5" />
               </button>
 
-              <button
+              <Link
                 ref={(el) => (btnRef.current[1] = el)}
-                onClick={() => navigate("/contact")}
+                href="/contact"
                 className="cursor-pointer flex items-center justify-center gap-2 border border-white/40 px-6 py-3 rounded-full font-semibold hover:bg-white hover:text-black hover:shadow-xl transition-all duration-300"
               >
                 Contact Us
                 <Mail className="w-5 h-5" />
-              </button>
+              </Link>
             </div>
           </div>
 
-          {/* RIGHT VIDEO */}
-          <div className="flex justify-center lg:justify-end perspective-1000">
-            <video
-              ref={videoRef}
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="w-full max-w-md lg:max-w-lg rounded-2xl shadow-2xl object-cover border border-white/20 backdrop-blur-md transition-transform duration-300"
-            >
-              <source src={heroVideo} type="video/mp4" />
-            </video>
+          {/* RIGHT LEAD FORM */}
+          <div className="flex justify-center lg:justify-end">
+            <EnquiryForm />
           </div>
 
         </div>

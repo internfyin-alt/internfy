@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from "react";
 
 const Loader = () => {
@@ -36,9 +38,9 @@ const Loader = () => {
             <div className="absolute inset-0 rounded-full border-4 border-blue-500 border-t-transparent animate-spin"></div>
             <div className="absolute inset-2 rounded-full border-4 border-purple-500 border-b-transparent animate-spin-slow"></div>
             <img
-              src="/business/logo1.png"
-              alt="Company Logo"
-              className="absolute inset-0 w-full h-full object-contain p-4 animate-bounce"
+              src="/internfy-logo.png"
+              alt="Internfy"
+              className="absolute inset-4 w-[calc(100%-2rem)] h-[calc(100%-2rem)] object-contain rounded-full animate-bounce"
             />
           </div>
         </div>

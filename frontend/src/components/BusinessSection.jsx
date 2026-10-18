@@ -1,20 +1,23 @@
+"use client";
+
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 
 const data = [
   {
     title: "Grow your business",
     desc: "We believe in challenges and so we have made challenges to help you grow exponentially.",
-    img: "/business/Grow.png",
+    img: "/business/Grow.97aa16b74766.webp",
   },
   {
     title: "Cost savings ideas",
     desc: "We also help our clients with social media strategy and cost-effective solutions.",
-    img: "/business/cost.png",
+    img: "/business/cost.cd29d0fd033c.webp",
   },
   {
     title: "Boost performance",
     desc: "We deliver email marketing campaigns and performance optimization to your audience.",
-    img: "/business/air.png",
+    img: "/business/air.ffd72bb8b698.webp",
   },
 ];
 
@@ -55,7 +58,10 @@ const BusinessSection = () => {
                 {/* LEFT IMAGE */}
                 <div className="relative w-16 h-16 flex-shrink-0">
                   <div className="absolute inset-0 bg-blue-100 rounded-2xl transform rotate-6 group-hover:rotate-12 transition-transform duration-500"></div>
-                  <img
+                  <Image
+                    width={64}
+                    height={64}
+                    sizes="64px"
                     src={item.img}
                     alt={item.title}
                     className="relative w-full h-full object-contain transform group-hover:scale-110 transition-transform duration-500"
