@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { adminLogin } from "../../services/api";
 
 const AdminLogin = () => {
   const { push: navigate } = useRouter();
@@ -27,16 +26,18 @@ const AdminLogin = () => {
     setError("");
 
     try {
-      const response = await adminLogin(formData);
-      
-      // Save token and admin info
-      localStorage.setItem("adminToken", response.token);
-      localStorage.setItem("adminInfo", JSON.stringify(response.admin));
-      
-      // Redirect to dashboard
+      const response = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || "Login failed.");
+      localStorage.removeItem("adminToken");
+      localStorage.removeItem("adminInfo");
       navigate("/admin/dashboard");
     } catch (err) {
-      setError(err.response?.data?.message || "Login failed. Please try again.");
+      setError(err.message || "Login failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -69,6 +70,7 @@ const AdminLogin = () => {
               </label>
               <input
                 type="email"
+                autoComplete="username"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
@@ -84,6 +86,7 @@ const AdminLogin = () => {
               </label>
               <input
                 type="password"
+                autoComplete="current-password"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
@@ -102,11 +105,6 @@ const AdminLogin = () => {
             </button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-gray-600 text-sm">
-              Default credentials: admin@yourcompany.com / Admin@123456
-            </p>
-          </div>
         </div>
 
         {/* Back to Home */}

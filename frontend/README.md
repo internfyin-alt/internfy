@@ -36,7 +36,7 @@ Deploy this folder as a Next.js application (for example, on Vercel or a Node.js
 
 Public pages: `/`, `/about`, `/services`, `/training`, `/staffing`, `/career`, `/contact`, `/cloudservice`, `/webservice`, `/apiservice`, `/backendservice`.
 
-The existing admin and certificate screens are also available at `/admin/login`, `/admin/dashboard`, and `/verify-certificate`. They expect the original admin/certificate API; the new enquiry backend does not implement those endpoints. The existing privacy/terms footer links have no page content in the provided project.
+The admin panel at `/admin/login` and `/admin/dashboard` provides authenticated access to saved home-page enquiries. Configure the server-only admin settings described in the backend README; no default password is published in the interface. The certificate screen at `/verify-certificate` still expects the original certificate API, which this backend does not implement. The existing privacy/terms footer links have no page content in the provided project.
 
 ## Backend configuration
 
