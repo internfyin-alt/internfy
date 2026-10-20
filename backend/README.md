@@ -45,6 +45,8 @@ The mobile number accepts 10–15 digits with an optional `+` country prefix. Sp
 
 Deploy `backend` as a Node.js service using `npm ci` and `npm start`. Set its Supabase credentials in the hosting environment. In the frontend hosting environment, set server-only `BACKEND_URL` to this service’s HTTPS origin. The frontend's existing `NEXT_PUBLIC_API_URL` setting is independent and remains available for its older admin API integrations.
 
-This service adds enquiries only; it does not implement the older admin, certificate, enrollment, or quote endpoints.
+The admin panel at `/admin/login` lists saved home-page enquiries at `/admin/dashboard`. Login uses server-only `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH` (salt:hex scrypt hash, 64 bytes), and `ADMIN_SESSION_SECRET` in `frontend/.env.local`. Set the same random `ADMIN_API_SECRET` in both frontend and backend environments. Sessions last eight hours and use signed HttpOnly cookies; passwords and database credentials stay on the server. Restart both services after changing environment settings. Login attempts are limited per server instance; multiple production replicas should use a shared rate limiter at the gateway.
+
+The protected `GET /api/admin/enquiries?page=1` endpoint returns 50 records per page, newest first, with the total count. Only the Next.js server calls this endpoint using `ADMIN_API_SECRET`. The public `/api/enquiries` endpoint remains submission-only. The panel supports viewing, searching within each page, pagination, refresh and logout; the older certificate, enrollment, and quote APIs are not implemented.
 
 Run the API validation and failure-handling checks with `npm test`. Tests use an injected database adapter and do not write to a real Supabase project.

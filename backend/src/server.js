@@ -10,6 +10,16 @@ const supabase = configured ? createClient(url, secret, {
 
 const app = createApp({
   configured,
+  adminApiSecret: process.env.ADMIN_API_SECRET,
+  listEnquiries: supabase ? async ({ page, pageSize }) => {
+    const start = (page - 1) * pageSize;
+    const { data, count, error } = await supabase.from("service_enquiries")
+      .select("id,name,mobile,city,service,created_at", { count: "exact" })
+      .order("created_at", { ascending: false }).order("id", { ascending: false })
+      .range(start, start + pageSize - 1).abortSignal(AbortSignal.timeout(10000));
+    if (error) throw error;
+    return { enquiries: data, total: count, page, pageSize };
+  } : undefined,
   saveEnquiry: supabase ? async (data) => {
     const { error } = await supabase.from("service_enquiries").insert(data).abortSignal(AbortSignal.timeout(10000));
     if (error) throw error;
