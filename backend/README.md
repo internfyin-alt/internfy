@@ -1,52 +1,66 @@
-# Internfy backend
+﻿# Internfy backend — Supabase Edge Functions
 
-Node.js/Express API for the home-page service enquiry form, backed by Supabase. Requires Node.js 22.9+ (the installed Node.js 24 works).
+The enquiry backend now runs in Supabase Edge Functions (Deno), with data in Supabase PostgreSQL. There is no Express/Render deployment requirement. The Next.js frontend on Vercel keeps its existing same-origin API adapters and admin session cookies.
 
-## Start locally
+## Deploy to your existing Supabase project
 
-```powershell
-cd E:\internfy\interfy\backend
-npm.cmd install
-Copy-Item .env.example .env
-npm.cmd run dev
-```
+1. Open Supabase SQL Editor. Your existing `public.service_enquiries` table can be reused; existing records are preserved. For a fresh project, first run `supabase/migrations/001_service_enquiries.sql`. Then run `supabase/migrations/002_admin_read_access.sql` in both existing and fresh projects. Anonymous and authenticated direct table access stays revoked.
+2. Open Supabase **Edge Functions → Secrets**. Add `ADMIN_API_SECRET` using the exact value already in `frontend/.env.local`. Supabase supplies `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` to the function automatically. Do not upload your whole local `.env` file.
+3. In PowerShell, run:
 
-The API listens on port 5000. Without Supabase credentials, it starts normally but responds with HTTP 503 to submissions; it does not claim that a record was saved.
+   ```powershell
+   cd E:\internfy\interfy\backend
+   npx.cmd supabase login
+   npx.cmd supabase functions deploy internfy-api --project-ref YOUR_PROJECT_REF --use-api
+   ```
 
-In another terminal, start the frontend:
+   Replace `YOUR_PROJECT_REF` with the ID in your Supabase project URL, for example the `abc` in `https://abc.supabase.co`. The supplied `supabase/config.toml` disables the gateway's legacy JWT verification because the handler authenticates its server-to-server callers using the shared secret. Do not remove the handler's authorization check. API deployment does not require Docker.
+4. Open `https://YOUR_PROJECT_REF.supabase.co/functions/v1/internfy-api/health`. Expect `{"status":"ok"}`. Health confirms the function is deployed; a form submission verifies database access.
+5. In Vercel, configure these server-only environment variables for Production and any Preview deployment you use:
+
+   | Variable | Value |
+   |---|---|
+   | `SUPABASE_URL` | Your project's `https://YOUR_PROJECT_REF.supabase.co` URL |
+   | `ADMIN_API_SECRET` | Exactly the value saved in Supabase Edge Function Secrets |
+   | `ADMIN_EMAIL` | Existing admin email |
+   | `ADMIN_PASSWORD_HASH` | Existing complete salt:hash value |
+   | `ADMIN_SESSION_SECRET` | Existing session-signing secret |
+   | `SITE_URL` | Your actual public website origin |
+
+   `BACKEND_URL` is no longer used for enquiries. Database service/secret keys are not required on Vercel and must never be exposed through `NEXT_PUBLIC_` settings.
+6. Commit and push the updated code, then deploy the Vercel frontend with Root Directory `frontend` and framework Next.js.
+7. Submit one enquiry and verify it in Supabase Table Editor and `/admin/dashboard`. Admin login still uses the existing email/password and signed HttpOnly cookie in Next.js. It is not a Supabase Auth account.
+
+## Local frontend
+
+Set `SUPABASE_URL` and the matching `ADMIN_API_SECRET` in `frontend/.env.local`, along with the existing admin session settings. Deploy the function first, then run:
 
 ```powershell
 cd E:\internfy\interfy\frontend
 npm.cmd run dev
 ```
 
-Open http://localhost:3000. The lead form is on the right side of the home-page hero and stacks below the introduction on mobile; Get Started scrolls to it. The browser posts to the Next.js `/api/enquiries` endpoint, which forwards to this backend. No Supabase credentials are sent to the browser.
+Local frontend submissions use the deployed Supabase function and therefore write to the configured real database. The standalone Node.js/Express server has been removed. Node.js is still required by the Next.js frontend and by `npx` when using the Supabase CLI that way.
 
-## Connect Supabase when ready
+## Edge API
 
-1. In the intended Supabase project, open SQL Editor and run `supabase/migrations/001_service_enquiries.sql` from this backend folder. This creates `public.service_enquiries` with `id`, `name`, `mobile`, `city`, `service`, and `created_at`.
-2. Open `backend/.env` privately and set `SUPABASE_URL` to the project URL and `SUPABASE_SECRET_KEY` to the server secret key. A legacy key can instead be set as `SUPABASE_SERVICE_ROLE_KEY`. Do not use an anon/publishable key here.
-3. Restart the backend and submit the form. Check the `service_enquiries` table in Supabase Table Editor to see saved enquiries.
+The function base URL is `/functions/v1/internfy-api`:
 
-The SQL migration is prepared locally; it has not been run against a live project. No live database write can be verified until project credentials are configured.
+- `GET /health`: deployment status; public, does not expose credentials or enquiry details.
+- `POST /enquiries`: requires server-only `Authorization: Bearer ADMIN_API_SECRET`; accepts `{ "name", "mobile", "city", "service" }`. Validates all fields, normalizes mobile numbers, stores only allowed fields, and responds 201 only after a successful database write. JSON bodies are limited to 8 KB.
+- `GET /admin/enquiries?page=1`: requires the same server credential. Returns 50 records per page with an exact count, sorted newest first. The Next.js adapter additionally requires a valid admin session before calling this endpoint.
 
-Row Level Security is enabled and anonymous/authenticated database access is revoked. Only the server writes submissions. No public API lists visitors’ details. See [Supabase API keys](https://supabase.com/docs/guides/getting-started/api-keys) and [Row Level Security](https://supabase.com/docs/guides/database/postgres/row-level-security).
+The browser calls same-origin Next.js adapters. It never receives the API secret or database credential. Since Edge Functions are called server-to-server, browser CORS configuration is not needed. Failures return generic messages and never log visitor data or secrets.
 
-## API
+## Checks
 
-- `GET /api/health`: server status and whether database credentials are present (not a database connectivity check).
-- `GET /api/services`: dropdown options.
-- `POST /api/enquiries`: accepts JSON `{ "name": "Your name", "mobile": "9876543210", "city": "Noida", "service": "Web Development" }`.
-- Successful database insert: HTTP 201. Invalid fields: HTTP 400. Database unavailable: HTTP 503. Request body limit: 8 KB.
+```powershell
+cd E:\internfy\interfy\backend
+deno task test
+```
 
-The mobile number accepts 10–15 digits with an optional `+` country prefix. Spaces, parentheses, and hyphens are removed before storing. All four fields are required; services are validated against the dropdown allowlist.
+Install Deno to run the tests. Tests cover the Edge handler using Web APIs, the Next.js adapter, normalization, input limits, unauthorized reads and writes, pagination, database failures, and admin session behavior. They use fake storage and do not write to Supabase. The tests use Deno's built-in compatibility for `node:test` and `node:assert`; no npm dependencies or Express server are required.
 
-## Production
+The backend contains only Supabase functions, SQL migrations, and tests. Supabase runs `supabase/functions/internfy-api/index.ts` using Deno; `deno.json` defines the local test task. Keep real secrets in Supabase Edge Function Secrets and the frontend's server-only environment settings.
 
-Deploy `backend` as a Node.js service using `npm ci` and `npm start`. Set its Supabase credentials in the hosting environment. In the frontend hosting environment, set server-only `BACKEND_URL` to this service’s HTTPS origin. The frontend's existing `NEXT_PUBLIC_API_URL` setting is independent and remains available for its older admin API integrations.
-
-The admin panel at `/admin/login` lists saved home-page enquiries at `/admin/dashboard`. Login uses server-only `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH` (salt:hex scrypt hash, 64 bytes), and `ADMIN_SESSION_SECRET` in `frontend/.env.local`. Set the same random `ADMIN_API_SECRET` in both frontend and backend environments. Sessions last eight hours and use signed HttpOnly cookies; passwords and database credentials stay on the server. Restart both services after changing environment settings. Login attempts are limited per server instance; multiple production replicas should use a shared rate limiter at the gateway.
-
-The protected `GET /api/admin/enquiries?page=1` endpoint returns 50 records per page, newest first, with the total count. Only the Next.js server calls this endpoint using `ADMIN_API_SECRET`. The public `/api/enquiries` endpoint remains submission-only. The panel supports viewing, searching within each page, pagination, refresh and logout; the older certificate, enrollment, and quote APIs are not implemented.
-
-Run the API validation and failure-handling checks with `npm test`. Tests use an injected database adapter and do not write to a real Supabase project.
+Official references: [Edge deployment](https://supabase.com/docs/guides/functions/deploy), [function secrets](https://supabase.com/docs/guides/functions/secrets), [function configuration](https://supabase.com/docs/guides/functions/function-configuration).

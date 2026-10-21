@@ -1,14 +1,14 @@
 import assert from "node:assert/strict";
 import { scryptSync } from "node:crypto";
 import { test } from "node:test";
-import { createApp } from "../src/app.js";
+import { createHandler } from "../supabase/functions/internfy-api/handler.js";
 import { authenticated, createSession, sessionCookie, validCredentials } from "../../frontend/src/lib/admin-auth.js";
 import { POST as login } from "../../frontend/src/app/api/admin/login/route.js";
 import { POST as logout } from "../../frontend/src/app/api/admin/logout/route.js";
 import { GET as enquiries } from "../../frontend/src/app/api/admin/enquiries/route.js";
 
 test("admin login, signed sessions, expiry, protected list and logout", async () => {
-  const keys = ["ADMIN_EMAIL", "ADMIN_PASSWORD_HASH", "ADMIN_SESSION_SECRET", "ADMIN_API_SECRET", "BACKEND_URL"];
+  const keys = ["ADMIN_EMAIL", "ADMIN_PASSWORD_HASH", "ADMIN_SESSION_SECRET", "ADMIN_API_SECRET", "SUPABASE_URL"];
   const previous = Object.fromEntries(keys.map((key) => [key, process.env[key]]));
   Object.assign(process.env, {
     ADMIN_EMAIL: "admin@example.test",
@@ -17,17 +17,28 @@ test("admin login, signed sessions, expiry, protected list and logout", async ()
     ADMIN_API_SECRET: "test-api-secret",
   });
   let reads = 0;
-  const server = createApp({ adminApiSecret: process.env.ADMIN_API_SECRET, listEnquiries: async ({ page, pageSize }) => {
-    reads++;
-    return { enquiries: [{ id: "test-record", name: "Test Visitor" }], total: 1, page, pageSize };
-  } }).listen(0, "127.0.0.1");
-  await new Promise((resolve) => server.once("listening", resolve));
-  process.env.BACKEND_URL = `http://127.0.0.1:${server.address().port}`;
+  process.env.SUPABASE_URL = "https://example.supabase.co";
+  const settings = {
+    ADMIN_API_SECRET: process.env.ADMIN_API_SECRET,
+    SUPABASE_URL: process.env.SUPABASE_URL,
+    SUPABASE_SERVICE_ROLE_KEY: "test-service-key",
+  };
+  const handler = createHandler({
+    env: (key) => settings[key],
+    fetcher: async (url, options) => {
+      reads++;
+      assert.equal(url.pathname, "/rest/v1/service_enquiries");
+      assert.equal(options.headers.apikey, settings.SUPABASE_SERVICE_ROLE_KEY);
+      return Response.json([{ id: "test-record", name: "Test Visitor" }], { headers: { "Content-Range": "0-0/1" } });
+    },
+  });
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = (url, options) => handler(new Request(url, options));
   const request = (path, body, cookie, origin = "http://localhost") => new Request(`http://localhost/api/admin/${path}`, {
     method: body ? "POST" : "GET", headers: { origin, "Content-Type": "application/json", ...(cookie ? { cookie } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}),
   });
   try {
-    assert.equal((await fetch(`${process.env.BACKEND_URL}/api/admin/enquiries`)).status, 401);
+    assert.equal((await fetch(`${process.env.SUPABASE_URL}/functions/v1/internfy-api/admin/enquiries`)).status, 401);
     assert.equal((await enquiries(request("enquiries"))).status, 401);
     assert.equal(reads, 0);
     assert.equal(validCredentials("admin@example.test", "wrong"), false);
@@ -59,8 +70,7 @@ test("admin login, signed sessions, expiry, protected list and logout", async ()
     for (let i = 0; i < 18; i++) await login(request("login", { ...credentials, password: "wrong" }));
     assert.equal((await login(request("login", credentials))).status, 429);
   } finally {
-    server.closeAllConnections();
-    await new Promise((resolve) => server.close(resolve));
+    globalThis.fetch = originalFetch;
     for (const key of keys) { if (previous[key] === undefined) delete process.env[key]; else process.env[key] = previous[key]; }
   }
 });

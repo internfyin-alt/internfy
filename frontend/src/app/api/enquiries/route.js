@@ -1,3 +1,5 @@
+import { backendRequest } from "../../../lib/supabase-backend.js";
+
 export const runtime = "nodejs";
 
 export async function POST(request) {
@@ -16,13 +18,10 @@ export async function POST(request) {
     return Response.json({ message: "The submitted form contains invalid JSON." }, { status: 400 });
   }
   try {
-    const base = process.env.BACKEND_URL || "http://localhost:5000";
-    const response = await fetch(`${base.replace(/\/$/, "")}/api/enquiries`, {
+    const response = await backendRequest("/enquiries", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body,
-      cache: "no-store",
-      signal: AbortSignal.timeout(15000),
     });
     const result = await response.json();
     if (response.status === 201) return Response.json({ message: result.message }, { status: 201 });

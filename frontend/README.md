@@ -40,17 +40,13 @@ The admin panel at `/admin/login` and `/admin/dashboard` provides authenticated 
 
 ## Backend configuration
 
-The home-page enquiry form uses the separate [`../backend`](../backend/README.md) Node.js service and Supabase. Start that service alongside Next.js. Its README includes the database SQL migration and credentials setup. Until Supabase is configured, the form shows an error instead of reporting a saved submission. Set server-only `BACKEND_URL` in this frontend's `.env.local` when the backend is hosted elsewhere (default `http://localhost:5000`).
+Enquiry submission and admin listing use Supabase Edge Functions. No Express server or Render service is needed. See [Supabase backend deployment](../backend/README.md) for SQL, function deployment, and Vercel setup.
 
-Copy `.env.example` to `.env.local` if you need a different API URL:
+Set server-only `SUPABASE_URL` and `ADMIN_API_SECRET` in `.env.local` and Vercel. The browser submits to the same-origin Next.js routes, which call `/functions/v1/internfy-api`. Only the Edge Function accesses the database using Supabase's built-in server credential. `BACKEND_URL` is no longer used by enquiry routes.
 
-```dotenv
-NEXT_PUBLIC_API_URL=http://localhost:5000/api
-```
+Admin login remains in the Next.js application with signed HttpOnly session cookies. Keep `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH`, and `ADMIN_SESSION_SECRET` configured on Vercel. The Edge Function requires the matching `ADMIN_API_SECRET` for both writes and protected reads; it never exposes a public list.
 
-The default API URL is unchanged. `NEXT_PUBLIC_API_URL` replaces the old `REACT_APP_API_URL` setting. This is a public browser setting; do not put secrets in it. Restart development or rebuild production after changing it.
-
-Routing follows the [Next.js App Router documentation](https://nextjs.org/docs/app/getting-started/layouts-and-pages). Tailwind v4 uses the [PostCSS integration](https://tailwindcss.com/docs/installation/framework-guides/nextjs).
+The older certificate/enrollment/quote API integration is separate and is not implemented by this backend.
 
 ## Search engine configuration
 

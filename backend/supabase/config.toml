@@ -1,0 +1,5 @@
+project_id = "internfy"
+
+[functions.internfy-api]
+# Requests are authenticated in the handler using the server-only shared secret.
+verify_jwt = false
